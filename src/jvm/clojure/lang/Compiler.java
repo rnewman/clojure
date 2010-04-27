@@ -3307,6 +3307,11 @@ static public class ObjExpr implements Expr{
 	}
 
 	void compile(String superName, String[] interfaceNames, boolean oneTimeUse) throws Exception{
+    // Default accessibility.
+    compile(superName, interfaceNames, oneTimeUse, ACC_PUBLIC + ACC_SUPER + ACC_FINAL);
+  }
+  
+  void compile(String superName, String[] interfaceNames, boolean oneTimeUse, int classAccess) throws Exception{
 		//create bytecode for a class
 		//with name current_ns.defname[$letname]+
 		//anonymous fns get names fn__id
@@ -3328,7 +3333,7 @@ static public class ObjExpr implements Expr{
 		ClassVisitor cv = cw;
 //		ClassVisitor cv = new TraceClassVisitor(new CheckClassAdapter(cw), new PrintWriter(System.out));
 		//ClassVisitor cv = new TraceClassVisitor(cw, new PrintWriter(System.out));
-		cv.visit(V1_5, ACC_PUBLIC + ACC_SUPER + ACC_FINAL, internalName, null,superName,interfaceNames);
+		cv.visit(V1_5, classAccess, internalName, null,superName,interfaceNames);
 //		         superName != null ? superName :
 //		         (isVariadic() ? "clojure/lang/RestFn" : "clojure/lang/AFunction"), null);
 		String source = (String) SOURCE.deref();
@@ -6024,8 +6029,17 @@ static public class NewInstanceExpr extends ObjExpr{
 	}
 
 	static ObjExpr build(IPersistentVector interfaceSyms, IPersistentVector fieldSyms, Symbol thisSym,
-	                     String tagName, Symbol className,
-	                  Symbol typeTag, ISeq methodForms, Object frm) throws Exception{
+			String tagName, Symbol className,
+			Symbol typeTag, ISeq methodForms, Object frm) throws Exception{
+		return build(interfaceSyms, fieldSyms, thisSym,
+				tagName, className,
+				typeTag, methodForms, frm, null);
+	}
+  
+	static ObjExpr build(IPersistentVector interfaceSyms, IPersistentVector fieldSyms, Symbol thisSym,
+			String tagName, Symbol className,
+			Symbol typeTag, ISeq methodForms, Object frm, Integer classAccess) throws Exception{
+    
 		NewInstanceExpr ret = new NewInstanceExpr(null);
 
 		ret.src = frm;
@@ -6126,10 +6140,15 @@ static public class NewInstanceExpr extends ObjExpr{
 			Var.popThreadBindings();
 			}
 
-		ret.compile(slashname(superClass),inames,false);
+    if (classAccess == null) {
+      ret.compile(slashname(superClass),inames,false);
+    }
+    else {
+      ret.compile(slashname(superClass),inames,false, classAccess.intValue());
+    }
 		ret.getCompiledClass();
 		return ret;
-		}
+  }
 
 	/***
 	 * Current host interop uses reflection, which requires pre-existing classes
