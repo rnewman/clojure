@@ -79,6 +79,7 @@ static final Keyword inlineAritiesKey = Keyword.intern(null, "inline-arities");
 
 static final Keyword volatileKey = Keyword.intern(null, "volatile");
 static final Keyword implementsKey = Keyword.intern(null, "implements");
+static final Keyword nonFinalKey = Keyword.intern(null, "non-final");
 static final String COMPILE_STUB_PREFIX = "compile__stub";
 
 static final Keyword protocolKey = Keyword.intern(null, "protocol");
@@ -5994,8 +5995,20 @@ static public class NewInstanceExpr extends ObjExpr{
 				rform = rform.next().next();
 				}
 
-			ObjExpr ret = build((IPersistentVector)RT.get(opts,implementsKey,PersistentVector.EMPTY),fields,null,tagname, classname,
-			             (Symbol) RT.get(opts,RT.TAG_KEY),rform, frm);
+			boolean nonFinal = ((Boolean)RT.get(opts,nonFinalKey,false)).booleanValue();
+			//System.out.println("Generating non-final deftype.");
+			ObjExpr ret;
+			if (!nonFinal) {
+				ret = build((IPersistentVector)RT.get(opts,implementsKey,PersistentVector.EMPTY),
+						fields,null,tagname,classname,
+						(Symbol) RT.get(opts,RT.TAG_KEY),rform, frm);
+			}
+			else { 
+				ret = build((IPersistentVector)RT.get(opts,implementsKey,PersistentVector.EMPTY),
+						fields,null,tagname,classname,
+						(Symbol) RT.get(opts,RT.TAG_KEY),rform, frm,
+						ACC_PUBLIC + ACC_SUPER);
+			}
 			return ret;
 		}
 	}
