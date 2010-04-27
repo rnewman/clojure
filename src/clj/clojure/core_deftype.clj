@@ -310,10 +310,13 @@
 
 (defn- emit-deftype* 
   "Do not use this directly - use deftype"
-  [tagname name fields interfaces methods]
+  [tagname name fields interfaces opts methods]
   (let [classname (with-meta (symbol (str *ns* "." name)) (meta name))]
     `(deftype* ~tagname ~classname ~fields 
        :implements ~interfaces 
+       ;; Would be nice to pass these whole, rather than having DeftypeParser
+       ;; re-extract them.
+       ~@(mapcat vec opts)
        ~@methods)))
 
 (defmacro deftype
@@ -383,7 +386,7 @@
         hinted-fields fields
         fields (vec (map #(with-meta % nil) fields))]
     `(do
-       ~(emit-deftype* name gname (vec hinted-fields) (vec interfaces) methods)
+       ~(emit-deftype* name gname (vec hinted-fields) (vec interfaces) opts methods)
        (import ~classname))))
 
 
